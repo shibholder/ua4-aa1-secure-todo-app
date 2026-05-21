@@ -1,0 +1,31 @@
+﻿# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Entorno
+.env
+.env.local
+*.local
+
+# Datos locales
+*.db
+*.sqlite
+
+# SO
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Builds
+dist/
+build/
+
+# Reportes de herramientas
+trivy-report.*
+zap-report.*
+gitleaks-report.*
