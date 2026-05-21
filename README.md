@@ -91,3 +91,90 @@ graph TD
     E -->|Artifact Registry| F
     F -->|Producción| G
     G -.->|Feedback Continuo| A
+---
+
+# Parte 2 — Evaluación de la seguridad mediante herramientas automáticas (UA4_AA1)
+
+Esta segunda parte del README es continuación directa de la actividad anterior y materializa el plan definido en la sección D. Donde antes describíamos qué herramientas integraríamos en cada fase del SDLC, aquí ejecutamos cinco de ellas sobre el código real, documentamos los resultados y mostramos las alteraciones que se introdujeron deliberadamente para forzar detecciones.
+
+## E. Selección de herramientas y por qué cada una
+
+Se han seleccionado cinco técnicas de evaluación, todas cubiertas por la Unidad 4 del temario de la asignatura y por la unidad de Seguridad de la cadena de suministro de software, y todas integradas como GitHub Actions sobre este mismo repositorio.
+
+| # | Categoría AST (Unidad 4) | Herramienta | Sección del temario | Justificación |
+|---|---|---|---|---|
+| 1 | **SAST** | CodeQL | Unidad 4 §2 | Solución SAST nativa de GitHub. Detecta sinks típicos en Node.js (command injection, XSS, path traversal). |
+| 2 | **SCA** | Dependabot | Cadena de suministro §3.2 | Citado **literalmente** en el temario como ejemplo de SCA en GitHub. Cubre `package.json` y `Dockerfile`. |
+| 3 | **Container scanning** | Trivy | Unidad 4 §6.3 | Citado en *Salvaguardando la seguridad del contenedor*. Detecta CVEs en la capa OS Alpine y dependencias embebidas. |
+| 4 | **DAST** | OWASP ZAP Baseline | Unidad 4 §3 | Herramienta DAST de referencia OWASP, citada como ejemplo de pruebas de caja negra. |
+| 5 | **Gestión de secretos** | Gitleaks | AST §2.2.4 | Aplica regex sobre el historial Git completo. Equivalente funcional a TruffleHog/Talisman ya citados en este README. |
+| Bonus | Push protection nativo | GitHub Secret Scanning | — | Complementa a Gitleaks bloqueando secretos **antes** del push. Activado en `Settings → Code security`. |
+
+**Herramientas descartadas:**
+- **IAST** y **RASP** (Unidad 4 §4 y §5): requieren instrumentar la aplicación. Coste/beneficio desfavorable para esta iteración. Quedan como trabajo futuro.
+- **OSV-Scanner**: se solapa con Dependabot. Mencionado como trabajo futuro en el informe.
+
+## F. Resumen de resultados
+
+| Herramienta | Hallazgos | Severidad principal |
+|---|---|---|
+| CodeQL | 2 | 1 Critical, 1 High |
+| Dependabot | 20 (16 open + 4 closed) | 10 High, 4 Moderate, 2 Low |
+| Trivy | 132 (131 open + 1 closed) | 5 Critical, 45 High, 70 Medium, 11 Low |
+| OWASP ZAP Baseline | 11 (todos WARN) | 56 reglas PASS |
+| Gitleaks | 7 secretos | (no aplica severidad) |
+| Secret Scanning | 3 (1 open, 2 bypassed) | Critical (Public leak) |
+
+**El informe detallado se encuentra en [`docs/informe-seguridad.md`](docs/informe-seguridad.md).** Allí se explican los hallazgos por herramienta, las incidencias encontradas durante la integración (conflicto Trivy/ZAP por la versión de Node, bug del artifact de la action de ZAP, comportamiento de Gitleaks frente a `.gitignore` y allowlists) y un análisis comparativo cruzado entre las cinco herramientas.
+
+## G. Alteraciones intencionales en la aplicación
+
+El enunciado anima al grupo a *"modificar o alterar la aplicación, tanto como sea necesario, para hacer que las herramientas seleccionadas detecten algún tipo de problema o generen una alarma"*. Las modificaciones se introdujeron en commits separados con prefijo `vuln(` para facilitar la trazabilidad.
+
+Resumen rápido:
+
+1. **Dependencias vulnerables** (`b753343`): `lodash@4.17.20`, `axios@0.21.0`, `jsonwebtoken@8.5.1`, `uuid@8.3.2`. Para SCA.
+2. **Command injection** (`e91071e`): ruta `/debug` que pasa `req.query.cmd` a `exec()`. Para SAST.
+3. **Imagen Docker degradada** (`1f6a80f`): `node:14-alpine` (EOL) sin instrucción `USER`. Para container scanning.
+4. **Cabeceras inseguras** (`9de0ee7`): elimina `X-Frame-Options`, añade `X-Powered-By` y `CORS: *`. Para DAST.
+5. **Secretos hardcodeados** (`09905bd`, `b109708`, `1d1b9b4`): claves Stripe, Slack, GitHub PAT, Google API y SendGrid en `app/src/config.js`. Para detección de secretos.
+
+**El detalle de cada modificación, su justificación técnica, los cambios concretos en código y el efecto observado se encuentra en [`docs/modificaciones.md`](docs/modificaciones.md).**
+
+Incluye también iteraciones fallidas (Modificación 3 — secretos en `.env.example` que `.gitignore` ocultó a Gitleaks) y bloqueos imprevistos (Push Protection rechazando el commit `b109708`). Esto se ha mantenido en la narrativa porque demuestra el funcionamiento real de las herramientas.
+
+## H. Estructura del repositorio (post UA4_AA1)
+
+```
+ua4-aa1-secure-todo-app/
+├── .github/
+│   ├── dependabot.yml              ← Configuración SCA
+│   └── workflows/
+│       ├── codeql.yml              ← SAST
+│       ├── gitleaks.yml            ← Detección de secretos
+│       ├── trivy.yml               ← Container scanning
+│       └── zap.yml                 ← DAST
+├── app/                            ← Código fuente (con vulnerabilidades plantadas)
+├── docs/
+│   ├── informe-seguridad.md        ← Informe principal de la evaluación
+│   ├── modificaciones.md           ← Detalle de alteraciones intencionales
+│   ├── gitleaks-findings.csv       ← Hallazgos Gitleaks (tabular)
+│   ├── gitleaks-results.sarif      ← SARIF completo de Gitleaks
+│   ├── owasp-zap/                  ← Reportes OWASP ZAP (HTML, JSON, MD)
+│   └── capturas/                   ← Evidencias visuales por herramienta
+├── Dockerfile                      ← Imagen base node:14-alpine (analizada por Trivy)
+├── Dockerfile.zap                  ← Imagen base node:18-alpine (usada por ZAP, ver §5.1 del informe)
+└── README.md                       ← Este documento
+```
+
+## I. Conclusiones
+
+1. **Las 5 herramientas + el bonus de Secret Scanning cubren las cuatro categorías AST del temario** (SAST, DAST, SCA, container scanning) más la gestión de secretos.
+2. **Cada herramienta detectó las vulnerabilidades plantadas para ella.** Adicionalmente, todas detectaron hallazgos no anticipados, demostrando el valor del análisis automatizado frente a una revisión manual.
+3. **Las herramientas son complementarias, no sustitutivas**: el caso del sink CodeQL invisible para ZAP, o el solapamiento Trivy ↔ Gitleaks detectando los mismos secretos desde ángulos distintos, demuestra que reducir el conjunto a 2–3 deja huecos significativos.
+4. **El "shift-left" funciona**: Push Protection bloqueó secretos *antes* de que entraran al repo. Dependabot abrió 13 PRs automáticos de remediación. SAST/SCA detectan en commit, no en producción.
+5. **Próximos pasos sugeridos** (más allá de esta entrega):
+   - Configurar `severity-threshold` para que los workflows fallen ante hallazgos Critical/High.
+   - Añadir OSV-Scanner para complementar a Dependabot (cita del temario §5 Cadena de suministro).
+   - Integrar Checkov para escanear los workflows YAML y los Dockerfiles como IaC.
+   - Firmar la imagen con Cosign antes del despliegue (mencionado en la sección D del README original).

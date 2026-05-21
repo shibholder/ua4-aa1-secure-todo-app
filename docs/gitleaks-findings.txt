@@ -1,0 +1,12 @@
+﻿
+Rule                File              Line
+----                ----              ----
+generic-api-key     app/src/config.js    6
+generic-api-key     app/src/config.js    7
+stripe-access-token app/src/config.js   13
+slack-bot-token     app/src/config.js   19
+github-pat          app/src/config.js   16
+gcp-api-key         app/src/config.js   22
+generic-api-key     app/src/config.js   25
+
+
