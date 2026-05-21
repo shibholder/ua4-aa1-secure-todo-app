@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   zap:
@@ -17,13 +18,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build -t todo-app-zap:latest .
+      - name: Build Docker image (Dockerfile.zap, Node 18)
+        run: docker build -f Dockerfile.zap -t todo-app-zap:latest .
 
       - name: Start application container
         run: |
           docker run -d -p 3000:3000 --name todo-app todo-app-zap:latest
-          sleep 10
+          echo "Waiting for app to be ready..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/items > /dev/null; then
+              echo "App is up after $i seconds"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Show app logs (debug)
+        if: always()
+        run: docker logs todo-app
 
       - name: Run OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.12.0
