@@ -1,17 +1,22 @@
 ﻿// MODIFICACIÓN INTENCIONAL — test detección de secretos (Gitleaks)
 // Credenciales hardcodeadas en código fuente — CWE-798
-// Patrón real: desarrollador commitea config con claves de prueba
 
 const config = {
     aws: {
-        accessKeyId: "AKIAIOSFODNN7EXAMPLE",
-        secretAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+        accessKeyId: "AKIA2E0A8F3B7D9C1E5A4F",
+        secretAccessKey: "h7Kp9mNqR2sT5vXy8AbCdEfGhJkLmNpQrStUvWxY"
     },
     db: {
         password: "supersecreto123"
     },
+    stripe: {
+        secret: "sk_live_4eC39HqLyjWDarjtT1zdp7dc"
+    },
     github: {
-        token: "ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        token: "ghp_aB3xK9mNqR2sT5vXy8wZ1cD4eF6gH7iJ8kLm"
+    },
+    slack: {
+        token: "xoxb-1234567890-1234567890123-AbCdEfGhIjKlMnOpQrStUvWx"
     }
 };
 
