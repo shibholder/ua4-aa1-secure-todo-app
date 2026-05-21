@@ -1,5 +1,15 @@
 const express = require('express');
 const app = express();
+
+// MODIFICACIÓN INTENCIONAL — test DAST (OWASP ZAP)
+// Cabeceras inseguras: deshabilita protecciones por defecto
+app.use((req, res, next) => {
+    res.setHeader('X-Powered-By', 'Express');          // expone tecnología
+    res.setHeader('Access-Control-Allow-Origin', '*'); // CORS abierto
+    res.removeHeader('X-Frame-Options');               // permite clickjacking
+    next();
+});
+
 const db = require('./persistence');
 const getItems = require('./routes/getItems');
 const addItem = require('./routes/addItem');
