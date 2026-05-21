@@ -1,4 +1,4 @@
-﻿# Informe de Evaluación de Seguridad mediante Herramientas Automáticas
+# Informe de Evaluación de Seguridad mediante Herramientas Automáticas
 
 **Asignatura:** Metodologías de Desarrollo Seguro (Unidad 4)
 **Actividad:** UA4_AA1 — Evaluar la seguridad mediante herramientas automáticas
@@ -64,7 +64,7 @@ La elección se ha guiado por tres criterios:
 | Critical | `js/command-line-injection` | `app/src/routes/debug.js:8` | El parámetro `req.query.cmd` se pasa directamente a `exec()` sin validación. Permite ejecución arbitraria de comandos en el contenedor. CWE-78. |
 | High | `js/missing-rate-limiting` | `app/src/index.js:21` | Las rutas de la API (GET/POST/PUT/DELETE /items) no aplican rate limiting, permitiendo abuso por fuerza bruta o DoS por agotamiento de recursos. CWE-770. |
 
-**Captura:** `capturas/codeql/CodeQL-list.png`, `CodeQL-detalle-1.png`.
+**Captura:** `capturas/codeql/codeql-list.png`, `codeql-detalle-1.png`.
 
 **Comentario técnico:** CodeQL detectó correctamente el sink de command injection introducido a propósito en el commit `e91071e` (ruta `/debug`). Es un caso de manual ideal: la query rastrea el flujo de `req.query.cmd` (taint source) hasta `exec()` (taint sink) sin sanitización intermedia, exactamente el patrón CWE-78. No se detectaron falsos positivos en este caso.
 
@@ -81,7 +81,7 @@ La elección se ha guiado por tres criterios:
 | Moderate | 4 |
 | Low | 2 |
 
-**Captura:** `capturas/dependabot/Dependabot-list.png`.
+**Captura:** `capturas/dependabot/dependabot-list.png`.
 
 **Ciclo de remediación demostrado:** se aceptó el PR automático `#5` que actualizó `path-to-regexp` de `8.3.0` a `8.4.2`, parcheando CVE-2024-52798 (ReDoS). Esto demuestra el flujo completo: detección → PR automático → revisión → merge → cierre de alerta. Ver captura `capturas/dependabot/pr-merged.png`.
 
