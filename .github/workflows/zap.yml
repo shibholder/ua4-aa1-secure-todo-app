@@ -32,7 +32,7 @@ jobs:
             sleep 1
           done
 
-      - name: Prepare reports directory with open permissions
+      - name: Prepare reports directory
         run: |
           mkdir -p zap-reports
           chmod 777 zap-reports
@@ -40,7 +40,6 @@ jobs:
       - name: Run OWASP ZAP Baseline Scan
         run: |
           docker run --rm --network=host \
-            --user $(id -u):$(id -g) \
             -v ${{ github.workspace }}/zap-reports:/zap/wrk:rw \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
@@ -48,12 +47,15 @@ jobs:
               -J report.json \
               -w report.md \
               -r report.html \
+              -d \
               || true
 
-      - name: List generated reports (debug)
+      - name: Fix permissions of generated files
         if: always()
         run: |
-          ls -la zap-reports/ || echo "Directory empty"
+          sudo chown -R $(id -u):$(id -g) zap-reports/ || true
+          chmod -R 644 zap-reports/*.* 2>/dev/null || true
+          ls -la zap-reports/
 
       - name: Show app logs (debug)
         if: always()
