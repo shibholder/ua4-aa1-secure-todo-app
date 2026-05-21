@@ -19,7 +19,10 @@ const config = {
         token: "xoxb-1234567890-1234567890123-AbCdEfGhIjKlMnOpQrStUvWx"
     },
     google: {
-        apiKey: "AIzaSyD-EXAMPLE_FAKE_KEY_jK9mN2pQrS5vXyAbCdEfG"
+        apiKey: "AIzaSyA8kK_F2nQrL7vXmP4tR9wD3sH6bC1eN5o"
+    },
+    sendgrid: {
+        apiKey: "SG.aB3cD4eF5gH6iJ7kL8mN9o.pQrS-tUvWxYz1234567890aBcDeFgHiJkLmNoPqR"
     }
 };
 
