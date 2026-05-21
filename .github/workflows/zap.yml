@@ -32,10 +32,15 @@ jobs:
             sleep 1
           done
 
-      - name: Run OWASP ZAP Baseline Scan
+      - name: Prepare reports directory with open permissions
         run: |
           mkdir -p zap-reports
+          chmod 777 zap-reports
+
+      - name: Run OWASP ZAP Baseline Scan
+        run: |
           docker run --rm --network=host \
+            --user $(id -u):$(id -g) \
             -v ${{ github.workspace }}/zap-reports:/zap/wrk:rw \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
@@ -44,7 +49,11 @@ jobs:
               -w report.md \
               -r report.html \
               || true
-        # || true porque zap-baseline.py devuelve exit 2 si hay WARNs (no es un fallo real)
+
+      - name: List generated reports (debug)
+        if: always()
+        run: |
+          ls -la zap-reports/ || echo "Directory empty"
 
       - name: Show app logs (debug)
         if: always()
@@ -56,4 +65,5 @@ jobs:
         with:
           name: zap-baseline-report
           path: zap-reports/
+          if-no-files-found: warn
           retention-days: 30
