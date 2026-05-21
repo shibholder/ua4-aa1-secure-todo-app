@@ -6,6 +6,10 @@ const addItem = require('./routes/addItem');
 const updateItem = require('./routes/updateItem');
 const deleteItem = require('./routes/deleteItem');
 
+// MODIFICACIÓN INTENCIONAL — test SAST
+const debugRoute = require('./routes/debug');
+app.get('/debug', debugRoute);
+
 app.use(express.json());
 app.use(express.static(__dirname + '/static'));
 
