@@ -5,17 +5,43 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   gitleaks:
-    name: Gitleaks scan
+    name: Gitleaks scan (full history)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Gitleaks
+        run: |
+          wget -q https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz
+          tar -xzf gitleaks_8.21.2_linux_x64.tar.gz
+          chmod +x gitleaks
+          ./gitleaks version
+
+      - name: Run Gitleaks on full history
+        run: |
+          ./gitleaks detect \
+            --source . \
+            --verbose \
+            --redact \
+            --report-format sarif \
+            --report-path gitleaks-results.sarif \
+            --exit-code 0
+        # exit-code 0 para que el job no falle aunque encuentre cosas (queremos ver el informe)
+
+      - name: Upload SARIF report
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report
+          path: gitleaks-results.sarif
+
+      - name: Show findings summary
+        if: always()
+        run: |
+          echo "=== Gitleaks findings ==="
+          cat gitleaks-results.sarif | grep -E '"ruleId"|"message"' | head -50 || true
