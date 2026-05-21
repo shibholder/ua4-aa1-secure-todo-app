@@ -17,6 +17,9 @@ const config = {
     },
     slack: {
         token: "xoxb-1234567890-1234567890123-AbCdEfGhIjKlMnOpQrStUvWx"
+    },
+    google: {
+        apiKey: "AIzaSyD-EXAMPLE_FAKE_KEY_jK9mN2pQrS5vXyAbCdEfG"
     }
 };
 
